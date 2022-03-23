@@ -31,28 +31,28 @@ const initializeDbAndServer = async () => {
 
 initializeDbAndServer();
 
-app.post("/register", async (request, response) => {
-  const { username, name, email, password, gender, location } = request.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
-  const databaseUser = await database.get(selectUserQuery);
-
-  if (databaseUser === undefined) {
+app.post("/users/", async (request, response) => {
+  const { username, email, name, password, gender, location } = request.body;
+  const hashedPassword = await bcrypt.hash(request.body.password, 10);
+  const selectUserQuery = `SELECT * FROM user WHERE username = '${username}'`;
+  const dbUser = await db.get(selectUserQuery);
+  if (dbUser === undefined) {
     const createUserQuery = `
-     INSERT INTO
-      user (username, name,email ,password, gender, location)
-     VALUES
-
-       '${username}',
-       '${name}',  '${email}',
-       '${hashedPassword}',
-       '${gender}',
-       '${location}'  
-      );`;
-    await database.run(createUserQuery);
-    response.send("User created successfully");
+      INSERT INTO 
+        user (username,email, name, password, gender, location) 
+      VALUES 
+        (
+          '${username}', '${email}', 
+          '${name}',
+          '${hashedPassword}', 
+          '${gender}',
+          '${location}'
+        )`;
+    const dbResponse = await db.run(createUserQuery);
+    const newUserId = dbResponse.lastID;
+    response.send(`Created new user with ${newUserId}`);
   } else {
-    response.status(400);
+    response.status = 400;
     response.send("User already exists");
   }
 });

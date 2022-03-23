@@ -19,3 +19,8 @@ Content-Type: application/json
   "username": "gopal",
   "password": "gopal22"
 }
+
+### 
+
+Get http://localhost:5000/Profile/
+Content-Type: application/json

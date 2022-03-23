@@ -31,32 +31,51 @@ const initializeDbAndServer = async () => {
 
 initializeDbAndServer();
 
-app.post("/register", async (request, response) => {
-  const { username, email, name, password, gender, location } = request.body;
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(request.body.password, salt);
-  this.password = hashedPassword;
-  const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
-  const databaseUser = await database.get(selectUserQuery);
+const Authenticate = (request, response, next) => {
+  let jwtToken;
+  const authHeader = request.headers["authorization"];
+  if (authHeader !== undefined) {
+    jwtToken = authHeader.split(" ")[1];
+  }
+  if (jwtToken === undefined) {
+    response.status(401);
+    response.send("Invalid JWT Token");
+  } else {
+    jwt.verify(jwtToken, "MY_SECRET_TOKEN", async (error, payload) => {
+      if (error) {
+        response.status(401);
+        response.send("Invalid JWT Token");
+      } else {
+        next();
+      }
+    });
+  }
+};
 
-  if (databaseUser === undefined) {
-    const createUserQuery = `
-     INSERT INTO
-      user (username,email ,name, password, gender, location)
-     VALUES
-      (
-       '${username}',  '${name}',
-       '${email}',
-       '${hashedPassword}',
-       '${gender}',
-       '${location}'  
-      );`;
-
-    await database.run(createUserQuery);
-    response.send("User created successfully");
+app.post("/register/", async (request, response) => {
+  const { username, password, name, email, gender, location } = request.body;
+  const getUserQuery = `
+      SELECT * FROM user WHERE username = '${username}';
+    `;
+  const dbUser = await db.get(getUserQuery);
+  if (dbUser === undefined) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const addUserQuery = `
+      INSERT INTO user( username, password,name,email,gender,location)
+      VALUES(
+          '${username}',
+          '${hashedPassword}',  
+           '${name}',
+              '${email}',
+                 '${gender}',
+                    '${location}',
+      );
+    `;
+    const dbResponse = await db.run(addUserQuery);
+    response.send("New User Created");
   } else {
     response.status(400);
-    response.send("User already exists");
+    response.send("username already exist");
   }
 });
 

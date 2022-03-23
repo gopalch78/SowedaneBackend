@@ -31,10 +31,6 @@ const initializeDbAndServer = async () => {
 
 initializeDbAndServer();
 
-const validatePassword = (password) => {
-  return password.length > 4;
-};
-
 app.post("/register", async (request, response) => {
   const { username, name, email, password, gender, location } = request.body;
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -53,13 +49,8 @@ app.post("/register", async (request, response) => {
        '${gender}',
        '${location}'  
       );`;
-    if (validatePassword(password)) {
-      await database.run(createUserQuery);
-      response.send("User created successfully");
-    } else {
-      response.status(400);
-      response.send("Password is too short");
-    }
+    await database.run(createUserQuery);
+    response.send("User created successfully");
   } else {
     response.status(400);
     response.send("User already exists");

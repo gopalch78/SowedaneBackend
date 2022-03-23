@@ -52,33 +52,40 @@ const Authenticate = (request, response, next) => {
   }
 };
 
-app.post("/register/", async (request, response) => {
-  const { username, password, name, email, gender, location } = request.body;
-  const getUserQuery = `
-      SELECT * FROM user WHERE username = '${username}';
-    `;
-  const dbUser = await db.get(getUserQuery);
-  if (dbUser === undefined) {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const addUserQuery = `
-      INSERT INTO user( username, password,name,email,gender,location)
-      VALUES(
-          '${username}',
-          '${hashedPassword}',  
-           '${name}',
-              '${email}',
-                 '${gender}',
-                    '${location}',
-      );
-    `;
-    const dbResponse = await db.run(addUserQuery);
-    response.send("New User Created");
+const validatePassword = (password) => {
+  return password.length > 4;
+};
+
+app.post("/register", async (request, response) => {
+  const { username, name, email, password, gender, location } = request.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
+  const databaseUser = await database.get(selectUserQuery);
+
+  if (databaseUser === undefined) {
+    const createUserQuery = `
+     INSERT INTO
+      user (username, name,email ,password, gender, location)
+     VALUES
+      (
+       '${username}',
+       '${name}',    '${email}',
+       '${hashedPassword}',
+       '${gender}',
+       '${location}'  
+      );`;
+    if (validatePassword(password)) {
+      await database.run(createUserQuery);
+      response.send("User created successfully");
+    } else {
+      response.status(400);
+      response.send("Password is too short");
+    }
   } else {
     response.status(400);
-    response.send("username already exist");
+    response.send("User already exists");
   }
 });
-
 app.post("/login", async (request, response) => {
   const { username, password } = request.body;
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;

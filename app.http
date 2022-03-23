@@ -2,13 +2,15 @@ POST http://localhost:5000/register/
 Content-Type: application/json
 
 {
-  "username": "Ramu",
-  "name": "ramu",
-  "email":"ramu@gmail.com",
-  "password": "ramu22",
+  "username": "Ram",
+  "name": "ram",
+  "email":"ram@gmail.com",
+  "password": "ram22",
   "gender": "male",
-  "location": "Hyderabad"
+  "location": "Hyderabad",
+  "mobileNumber":"1234567890"
 } 
+
 
 ###
 

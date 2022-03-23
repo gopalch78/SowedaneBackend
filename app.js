@@ -31,32 +31,40 @@ const initializeDbAndServer = async () => {
 
 initializeDbAndServer();
 
+const validatePassword = (password) => {
+  return password.length > 4;
+};
+
 app.post("/register", async (request, response) => {
-  const { username, name, email, password, gender, location } = request.body;
-  const hashedPassword = await bcrypt.hash(request.body.password, 10);
-  console.log(hashedPassword);
+  const {
+    username,
+    name,
+    email,
+    password,
+    gender,
+    location,
+    mobileNumber,
+  } = request.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
-  const databaseUser = await database.get(selectUserQuery);
-
-  if (databaseUser.password === undefined) {
+  // const dbUser = await db.get(selectUserQuery);
+  if (selectUserQuery.length > 0) {
     const createUserQuery = `
-     INSERT INTO
-      user (username, name,email ,password, gender, location)
-     VALUES
-      (
-       '${username}',
-       '${name}',    '${email}',
-       '${hashedPassword}',
-       '${gender}',
-       '${location}'  
-      );`;
-
-    const validatePassword = (password) => {
-      return password.length > 4;
-    };
-
+      INSERT INTO 
+        user (username, name, email,password, gender, location,mobileNumber) 
+      VALUES 
+        (
+          '${username}', 
+          '${name}',
+          '${email}',
+          '${hashedPassword}', 
+          '${gender}',
+          '${location}',
+          '${mobileNumber}'
+        )`;
     if (validatePassword(password)) {
-      await database.run(createUserQuery);
+      // await db.run(createUserQuery);
+      console.log(createUserQuery);
       response.send("User created successfully");
     } else {
       response.status(400);
@@ -66,38 +74,6 @@ app.post("/register", async (request, response) => {
     response.status(400);
     response.send("User already exists");
   }
-});
-
-app.post("/login", async (request, response) => {
-  const { username, password } = request.body;
-  const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
-  const databaseUser = await db.get(selectUserQuery);
-
-  if (databaseUser === undefined) {
-    response.status(400);
-    response.send("Invalid user");
-  } else {
-    const isPasswordMatched = await bcrypt.compare(
-      password,
-      databaseUser.password
-    );
-    if (isPasswordMatched === true) {
-      response.send("Login success!");
-    } else {
-      response.status(400);
-      response.send("Invalid password");
-    }
-  }
-});
-
-app.get("/Profile/", async (request, response) => {
-  const getStatesQuery = `
-    SELECT
-      *
-    FROM
-      user;`;
-  const statesArray = await db.all(getStatesQuery);
-  response.send(statesArray);
 });
 
 module.exports = app;

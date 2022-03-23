@@ -11,7 +11,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
-let database = null;
+let db = null;
 
 const initializeDbAndServer = async () => {
   try {
@@ -82,7 +82,7 @@ app.post("/register/", async (request, response) => {
 app.post("/login", async (request, response) => {
   const { username, password } = request.body;
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
-  const databaseUser = await database.get(selectUserQuery);
+  const databaseUser = await db.get(selectUserQuery);
 
   if (databaseUser === undefined) {
     response.status(400);

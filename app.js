@@ -52,17 +52,14 @@ const Authenticate = (request, response, next) => {
   }
 };
 
-const validatePassword = (password) => {
-  return password.length > 4;
-};
-
 app.post("/register", async (request, response) => {
   const { username, name, email, password, gender, location } = request.body;
   const hashedPassword = await bcrypt.hash(password, 10);
+  console.log(hashedPassword);
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
   const databaseUser = await database.get(selectUserQuery);
 
-  if (databaseUser === undefined) {
+  if (databaseUser.password === undefined) {
     const createUserQuery = `
      INSERT INTO
       user (username, name,email ,password, gender, location)
@@ -74,6 +71,11 @@ app.post("/register", async (request, response) => {
        '${gender}',
        '${location}'  
       );`;
+
+    const validatePassword = (password) => {
+      return password.length > 4;
+    };
+
     if (validatePassword(password)) {
       await database.run(createUserQuery);
       response.send("User created successfully");

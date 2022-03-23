@@ -88,6 +88,7 @@ app.post("/register", async (request, response) => {
     response.send("User already exists");
   }
 });
+
 app.post("/login", async (request, response) => {
   const { username, password } = request.body;
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
@@ -108,6 +109,16 @@ app.post("/login", async (request, response) => {
       response.send("Invalid password");
     }
   }
+});
+
+app.get("/Profile/", async (request, response) => {
+  const getStatesQuery = `
+    SELECT
+      *
+    FROM
+      user;`;
+  const statesArray = await db.all(getStatesQuery);
+  response.send(statesArray);
 });
 
 module.exports = app;

@@ -47,9 +47,8 @@ app.post("/register", async (request, response) => {
       user (username,email ,name, password, gender, location)
      VALUES
       (
-       '${username}',
+       '${username}',  '${name}',
        '${email}',
-       '${name}',
        '${hashedPassword}',
        '${gender}',
        '${location}'  

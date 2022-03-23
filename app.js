@@ -82,4 +82,27 @@ app.post("/register", async (request, response) => {
   }
 });
 
+app.post("/login", async (request, response) => {
+  const { username, password } = request.body;
+  const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
+  // const databaseUser = await db.get(selectUserQuery);
+
+  if (selectUserQuery === undefined) {
+    response.status(400);
+    response.send("Invalid user");
+  } else {
+    const salt = await bcrypt.genSalt(10);
+
+    // now we set user password to hashed password
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const isPasswordMatched = await bcrypt.compare(password, hashedPassword);
+    if (isPasswordMatched === true) {
+      response.send("Login success!");
+    } else {
+      response.status(400);
+      response.send("Invalid password");
+    }
+  }
+});
+
 module.exports = app;

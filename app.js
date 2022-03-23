@@ -36,15 +36,7 @@ const validatePassword = (password) => {
 };
 
 app.post("/register", async (request, response) => {
-  const {
-    id,
-    username,
-    name,
-    email,
-    password,
-    gender,
-    location,
-  } = request.body;
+  const { username, name, email, password, gender, location } = request.body;
   const hashedPassword = await bcrypt.hash(password, 10);
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
   const databaseUser = await database.get(selectUserQuery);
@@ -52,10 +44,9 @@ app.post("/register", async (request, response) => {
   if (databaseUser === undefined) {
     const createUserQuery = `
      INSERT INTO
-      user (id,username, name,email ,password, gender, location)
+      user (username, name,email ,password, gender, location)
      VALUES
-      (
-        '${id}',
+
        '${username}',
        '${name}',  '${email}',
        '${hashedPassword}',

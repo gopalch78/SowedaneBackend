@@ -37,7 +37,7 @@ const validatePassword = (password) => {
 
 app.post("/register", async (request, response) => {
   const { username, email, name, password, gender, location } = request.body;
-  const hashedPassword = await bcrypt.hash(request.body.password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
   const databaseUser = await database.get(selectUserQuery);
 

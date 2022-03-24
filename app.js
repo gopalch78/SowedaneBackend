@@ -3,17 +3,14 @@ const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
 const path = require("path");
 const bcrypt = require("bcrypt");
-const bodyParser = require("body-parser");
 const cors = require("cors");
-
 const databasePath = path.join(__dirname, "register.db");
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.use(bodyParser.json());
-let db = null;
+let database = null;
 
 const initializeDbAndServer = async () => {
   try {
@@ -22,8 +19,8 @@ const initializeDbAndServer = async () => {
       driver: sqlite3.Database,
     });
 
-    app.listen(process.env.PORT || 5000, () =>
-      console.log("Server Running at http://localhost:5000/")
+    app.listen(3000, () =>
+      console.log("Server Running at http://localhost:3000/")
     );
   } catch (error) {
     console.log(`DB Error: ${error.message}`);
@@ -47,30 +44,25 @@ app.post("/register", async (request, response) => {
     location,
     mobileNumber,
   } = request.body;
-  // generate salt to hash password
-  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  // now we set user password to hashed password
-  const hashedPassword = await bcrypt.hash(password, salt);
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
-  // const dbUser = await db.get(selectUserQuery);
-  if (selectUserQuery.length > 0) {
+  const databaseUser = await database.get(selectUserQuery);
+
+  if (databaseUser === undefined) {
     const createUserQuery = `
-      INSERT INTO 
-        user (username, name, email,password, gender, location,mobileNumber) 
-      VALUES 
-        (
-          '${username}', 
-          '${name}',
-          '${email}',
-          '${hashedPassword}', 
-          '${gender}',
-          '${location}',
-          '${mobileNumber}'
-        )`;
+     INSERT INTO
+      user (username, name,email ,password, gender, location,mobileNumber)
+     VALUES
+      (
+       '${username}',
+       '${name}',     '${email}',
+       '${hashedPassword}',
+       '${gender}',
+       '${location}',   '${mobileNumber}'
+      );`;
     if (validatePassword(password)) {
-      // await db.run(createUserQuery);
-      console.log(createUserQuery);
+      await database.run(createUserQuery);
       response.send("User created successfully");
     } else {
       response.status(400);
@@ -83,24 +75,60 @@ app.post("/register", async (request, response) => {
 });
 
 app.post("/login", async (request, response) => {
-  const { username, password } = request.body;
-  const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
-  // const databaseUser = await db.get(selectUserQuery);
+  const { email, password } = request.body;
+  const selectUserQuery = `SELECT * FROM user WHERE email = '${email}';`;
+  const databaseUser = await database.get(selectUserQuery);
 
-  if (selectUserQuery === undefined) {
+  if (databaseUser === undefined) {
     response.status(400);
     response.send("Invalid user");
   } else {
-    const salt = await bcrypt.genSalt(10);
-
-    // now we set user password to hashed password
-    const hashedPassword = await bcrypt.hash(password, salt);
-    const isPasswordMatched = await bcrypt.compare(password, hashedPassword);
+    const isPasswordMatched = await bcrypt.compare(
+      password,
+      databaseUser.password
+    );
     if (isPasswordMatched === true) {
       response.send("Login success!");
     } else {
       response.status(400);
       response.send("Invalid password");
+    }
+  }
+});
+
+app.put("/change-password", async (request, response) => {
+  const { username, oldPassword, newPassword } = request.body;
+  const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
+  const databaseUser = await database.get(selectUserQuery);
+  if (databaseUser === undefined) {
+    response.status(400);
+    response.send("Invalid user");
+  } else {
+    const isPasswordMatched = await bcrypt.compare(
+      oldPassword,
+      databaseUser.password
+    );
+    if (isPasswordMatched === true) {
+      if (validatePassword(newPassword)) {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const updatePasswordQuery = `
+          UPDATE
+            user
+          SET
+            password = '${hashedPassword}'
+          WHERE
+            username = '${username}';`;
+
+        const user = await database.run(updatePasswordQuery);
+
+        response.send("Password updated");
+      } else {
+        response.status(400);
+        response.send("Password is too short");
+      }
+    } else {
+      response.status(400);
+      response.send("Invalid current password");
     }
   }
 });

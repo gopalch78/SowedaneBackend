@@ -47,11 +47,8 @@ app.post("/register", async (request, response) => {
     location,
     mobileNumber,
   } = request.body;
-  // generate salt to hash password
-  const salt = await bcrypt.genSalt(10);
 
-  // now we set user password to hashed password
-  const hashedPassword = await bcrypt.hash(password, salt);
+  const hashedPassword = request.body.password;
   const selectUserQuery = `SELECT * FROM user WHERE username = '${username}';`;
   // const dbUser = await db.get(selectUserQuery);
   if (selectUserQuery.length > 0) {
